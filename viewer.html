@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Visualizador de Arte Digital</title>
+    <style>
+        body { background:black; display:flex; justify-content:center; }
+        canvas { border:1px solid #444; background:black; }
+    </style>
+</head>
+<body>
+
+<canvas id="canvas" width="800" height="800"></canvas>
+
+<script>
+async function drawFromJSON(jsonURL) {
+    const response = await fetch(jsonURL);
+    const regions = await response.json();
+
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    ctx.translate(canvas.width / 2, canvas.height / 2); // centrar
+
+    // Obtener límites
+    let allPoints = regions.flatMap(r => r.contour);
+    let xs = allPoints.map(p => p[0]);
+    let ys = allPoints.map(p => p[1]);
+    let minX = Math.min(...xs), maxX = Math.max(...xs);
+    let minY = Math.min(...ys), maxY = Math.max(...ys);
+
+    let width = maxX - minX;
+    let height = maxY - minY;
+
+    let scale = Math.min(600 / width, 600 / height);
+    let centerX = (minX + maxX) / 2;
+    let centerY = (minY + maxY) / 2;
+
+    // Dibujar
+    for (let region of regions) {
+        let color = `rgb(${region.color[0]},${region.color[1]},${region.color[2]})`;
+        ctx.fillStyle = color;
+
+        ctx.beginPath();
+        let pts = region.contour;
+        ctx.moveTo((pts[0][0] - centerX) * scale,
+                   -(pts[0][1] - centerY) * scale);
+
+        for (let i = 1; i < pts.length; i++) {
+            ctx.lineTo((pts[i][0] - centerX) * scale,
+                       -(pts[i][1] - centerY) * scale);
+        }
+        ctx.closePath();
+        ctx.fill();
+    }
+}
+
+// Cambia rosas.json por tu archivo
+drawFromJSON("rosas.json");
+</script>
+
+</body>
+</html>
